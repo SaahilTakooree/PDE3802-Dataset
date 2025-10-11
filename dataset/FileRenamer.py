@@ -1,7 +1,7 @@
 import os
 
-folder_path = r"C:\Users\mehar\Downloads\PDE3802-Dataset\dataset\mugs"
-name_prefix = "mug_"
+folder_path = r"C:\Users\mehar\Downloads\PDE3802-Dataset\dataset\staplers"
+name_prefix = "stapler_"
 extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp")
 
 files = [f for f in os.listdir(folder_path) if f.lower().endswith(extensions)]
