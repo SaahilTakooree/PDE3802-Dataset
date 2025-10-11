@@ -1,8 +1,8 @@
 import cv2
 import os
 
-video_path = "dataset\highlighter.mp4"
-output_folder = "highlighter"
+video_path = r"WhatsApp Video 2025-10-11 at 20.12.07_36e3922b.mp4"
+output_folder = "frames"
 frame_interval = 10
 
 os.makedirs(output_folder, exist_ok=True)
@@ -22,7 +22,7 @@ while True:
         break
 
     if frame_count % frame_interval == 0:
-        filename = os.path.join(output_folder, f"highlighter_{saved_count:05d}.png")
+        filename = os.path.join(output_folder, f"highlighter_{saved_count:04d}.png")
         cv2.imwrite(filename, frame)
         saved_count += 1
         print(f"Saved {filename}")
