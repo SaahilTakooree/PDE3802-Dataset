@@ -1,9 +1,9 @@
 import cv2
 import os
 
-video_path = r"WhatsApp Video 2025-10-11 at 20.12.07_36e3922b.mp4"
+video_path = r"20251011_234928.mp4"
 output_folder = "frames"
-frame_interval = 10
+frame_interval = 13
 
 os.makedirs(output_folder, exist_ok=True)
 
@@ -22,7 +22,7 @@ while True:
         break
 
     if frame_count % frame_interval == 0:
-        filename = os.path.join(output_folder, f"highlighter_{saved_count:04d}.png")
+        filename = os.path.join(output_folder, f"pencil_{saved_count:04d}.png")
         cv2.imwrite(filename, frame)
         saved_count += 1
         print(f"Saved {filename}")
