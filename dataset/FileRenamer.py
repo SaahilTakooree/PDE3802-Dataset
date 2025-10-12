@@ -1,7 +1,7 @@
 import os
 
-folder_path = r"C:\Users\mehar\Downloads\PDE3802-Dataset\dataset\usb_sticks"
-name_prefix = "usb_stick_"
+folder_path = r"C:\Users\mehar\Downloads\PDE3802-Dataset\dataset\paper_clips"
+name_prefix = "paper_clip_"
 extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp")
 
 files = [f for f in os.listdir(folder_path) if f.lower().endswith(extensions)]
