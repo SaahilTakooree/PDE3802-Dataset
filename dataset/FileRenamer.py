@@ -1,7 +1,7 @@
 import os
 
-folder_path = r"C:\Users\teena\Documents\Middlesex\Year 3\2025-26 PDE3802 Artificial Intelligence (AI) in Robotics\Coursework 1\PDE3802-Dataset\dataset\tapes"
-name_prefix = "tape_"
+folder_path = r"C:\Users\teena\Documents\Middlesex\Year 3\2025-26 PDE3802 Artificial Intelligence (AI) in Robotics\Coursework 1\PDE3802-Dataset\dataset\glue_sticks"
+name_prefix = "glue_stick_"
 extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp")
 
 files = [f for f in os.listdir(folder_path) if f.lower().endswith(extensions)]
