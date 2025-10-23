@@ -1,0 +1,15 @@
+path: C:\Users\mehar\Downloads\PDE3802-Dataset\data
+train: train
+val: val
+test: test
+names:
+  0: erasers
+  1: glue_sticks
+  2: highlighters
+  3: mugs
+  4: paper_clips
+  5: pencils
+  6: pens
+  7: staplers
+  8: tapes
+  9: usb_sticks
