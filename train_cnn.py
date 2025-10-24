@@ -23,13 +23,13 @@ CLASSES = [
     "pencils", "pens", "staplers", "tapes", "usb_sticks"
 ]
 
-# CRITICAL: Adjusted for better convergence
-EPOCHS = 100
-BATCH_SIZE = 16          # Reduced for larger model + better gradient stability
-IMG_SIZE = 320           # INCREASED from 224 - captures more detail
-PATIENCE = 15            # INCREASED - allow more time to learn
-LEARNING_RATE = 0.0001   # LOWER - more careful learning for subtle features
-DROPOUT = 0.2            # Reduced slightly
+# EXTREME AUGMENTATION TRAINING - Force shape-based learning
+EPOCHS = 150              # Increased - aggressive aug needs more time
+BATCH_SIZE = 16
+IMG_SIZE = 320
+PATIENCE = 25             # Much higher patience - aug makes training noisy
+LEARNING_RATE = 0.00005   # LOWER - more careful with extreme augmentation
+DROPOUT = 0.3             # Higher dropout for regularization
 
 # ============================================
 # CREATE YAML
@@ -60,13 +60,15 @@ def train_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     print(f"\n{'='*60}")
-    print(f"🎯 FINE-GRAINED CLASSIFICATION TRAINING")
+    print(f"🎯 EXTREME AUGMENTATION TRAINING")
+    print(f"💡 Strategy: Force model to learn SHAPES, not colors/backgrounds")
     print(f"{'='*60}")
     print(f"Device: {device.upper()}")
-    print(f"Model: YOLOv8{MODEL_SIZE}-cls (Better feature extraction)")
-    print(f"Image Size: {IMG_SIZE}x{IMG_SIZE} (Higher resolution)")
+    print(f"Model: YOLOv8{MODEL_SIZE}-cls")
+    print(f"Image Size: {IMG_SIZE}x{IMG_SIZE}")
     print(f"Batch Size: {BATCH_SIZE}")
-    print(f"Patience: {PATIENCE} epochs")
+    print(f"Patience: {PATIENCE} epochs (high for noisy training)")
+    print(f"Augmentation: EXTREME (colors, rotation, blur, crops)")
     print(f"{'='*60}\n")
     
     model = YOLO(f'yolov8{MODEL_SIZE}-cls.pt')
@@ -83,7 +85,7 @@ def train_model():
         device=device,
         workers=4,                # Reduced workers for stability
         project=PROJECT_NAME,
-        name='train_v2',
+        name='train_v3_extreme_aug',  # New name for extreme augmentation version
         exist_ok=True,
         pretrained=True,
         optimizer='AdamW',
@@ -103,41 +105,40 @@ def train_model():
         cache=False,              # No caching
         amp=True,                 # Mixed precision
         
-        # MODERATE AUGMENTATION - Don't destroy fine details
-        hsv_h=0.02,               # Reduced - preserve color info
-        hsv_s=0.5,                # Moderate saturation
-        hsv_v=0.3,                # Moderate brightness
-        degrees=15.0,             # Reduced rotation - preserve orientation
-        translate=0.15,           # Moderate translation
-        scale=0.4,                # Moderate scaling
-        shear=2.0,                # Minimal shear
-        perspective=0.0002,       # Minimal perspective
-        flipud=0.0,               # No vertical flip
-        fliplr=0.3,               # Less horizontal flip
+        # EXTREME AUGMENTATION - Force shape learning, ignore colors/backgrounds
+        hsv_h=0.5,                # MAXIMUM hue shift - full color spectrum
+        hsv_s=0.9,                # MAXIMUM saturation changes
+        hsv_v=0.9,                # MAXIMUM brightness changes
+        degrees=180.0,            # EXTREME rotation - all angles (pens work any angle)
+        translate=0.3,            # Heavy translation
+        scale=0.9,                # EXTREME scaling (tiny to huge)
+        shear=10.0,               # Heavy shear distortion
+        perspective=0.001,        # Perspective distortion
+        flipud=0.5,               # Vertical flip (objects work upside down)
+        fliplr=0.5,               # Horizontal flip
         
         # ADVANCED AUGMENTATION
         mosaic=0.0,               # Off for classification
-        mixup=0.1,                # Reduced - don't confuse similar objects
+        mixup=0.3,                # INCREASED - blend images to ignore backgrounds
         copy_paste=0.0,
-        auto_augment='randaugment',  # Use RandAugment
-        erasing=0.0,              # No random erasing
-        crop_fraction=1.0,        # Keep full image
+        auto_augment='randaugment',  # RandAugment for extra variety
+        erasing=0.4,              # Random erasing - force focus on remaining parts
         
         # REGULARIZATION
         dropout=DROPOUT,
-        label_smoothing=0.05,     # Reduced - we want confident predictions
         
         # TRAINING DYNAMICS
-        close_mosaic=10,          # Disable mosaic in last 10 epochs
-        plots=True,               # Generate plots
-        val=True,                 # Validate during training
+        close_mosaic=10,
+        plots=True,
+        val=True,
     )
     
     print("\n" + "="*60)
-    print("✅ TRAINING COMPLETE!")
+    print("✅ EXTREME AUGMENTATION TRAINING COMPLETE!")
     print("="*60)
-    print(f"\n📁 Model saved to: {PROJECT_NAME}/train_v2/weights/best.pt")
-    print(f"📊 Results saved to: {PROJECT_NAME}/train_v2/")
+    print(f"\n📁 Model saved to: {PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt")
+    print(f"📊 Check if model learned shapes instead of colors/backgrounds")
+    print(f"💡 This model should be more robust to real-world variations!")
     
     return model
 
@@ -148,7 +149,10 @@ def validate_model(model_path=None):
     """Validate with per-class breakdown"""
     
     if model_path is None:
-        model_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        # Check for v3 first, fallback to v2
+        v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
+        v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        model_path = v3_path if Path(v3_path).exists() else v2_path
     
     model = YOLO(model_path)
     
@@ -185,7 +189,8 @@ def validate_model(model_path=None):
         print("❌ Needs improvement")
     
     print("\n💡 Check the confusion matrix at:")
-    print(f"   {PROJECT_NAME}/train_v2/confusion_matrix.png")
+    print(f"   {Path(model_path).parent.parent}/confusion_matrix.png")
+    print(f"\n💡 Model used: {model_path}")
     
     return val_metrics, test_metrics
 
@@ -196,7 +201,10 @@ def predict_image(image_path, model_path=None, conf_threshold=0.3):
     """Predict with lower threshold to see uncertainty"""
     
     if model_path is None:
-        model_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        # Check for v3 first (extreme aug), fallback to v2
+        v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
+        v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        model_path = v3_path if Path(v3_path).exists() else v2_path
     
     model = YOLO(model_path)
     
@@ -225,10 +233,15 @@ def predict_image(image_path, model_path=None, conf_threshold=0.3):
     elif top1_conf < 0.7:
         print("⚠️  Moderate confidence - Consider the top 3 predictions")
     elif top1_conf > 0.95:
-        print("✅ Very high confidence - Likely correct")
-        # But warn if TOO confident (might be wrong)
-        if top1_conf > 0.99:
-            print("📌 Note: Extremely high confidence - verify if prediction seems wrong")
+        # Check if second prediction is very low (overconfident pattern)
+        if len(probs) >= 2 and probs[1][1].item() < 0.01:
+            print("⚠️  OVERCONFIDENT - Model might be wrong!")
+            print("💡 Very high confidence with near-zero alternatives suggests:")
+            print("   - Image might be outside training distribution")
+            print("   - Model hasn't seen similar examples")
+            print("   - Consider checking the prediction carefully")
+        else:
+            print("✅ Very high confidence - Likely correct")
     else:
         print("✅ High confidence")
     
@@ -273,10 +286,12 @@ def predict_image(image_path, model_path=None, conf_threshold=0.3):
 # PREDICT WITH TEST-TIME AUGMENTATION
 # ============================================
 def predict_with_tta(image_path, model_path=None):
-    """Use TTA for more robust predictions"""
+    """Use TTA for more robust predictions (Note: Not supported by YOLOv8-cls)"""
     
     if model_path is None:
-        model_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
+        v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        model_path = v3_path if Path(v3_path).exists() else v2_path
     
     model = YOLO(model_path)
     
@@ -308,7 +323,9 @@ def predict_webcam(model_path=None, camera_id=0):
     """Real-time webcam classification"""
     
     if model_path is None:
-        model_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/epoch0.pt'
+        v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
+        model_path = v3_path if Path(v3_path).exists() else v2_path
     
     model = YOLO(model_path)
     cap = cv2.VideoCapture(camera_id)
@@ -438,11 +455,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.mode == 'train':
-        print("\n🚀 Starting fine-grained classification training...")
-        print("💡 This will take longer but learn better features")
+        print("\n🚀 Starting EXTREME AUGMENTATION training...")
+        print("💡 Strategy: Learn object SHAPES, ignore colors/backgrounds")
+        print("⚠️  This will take 5-6 hours but should work on ANY image!")
+        print("🎨 Training with: Extreme colors, rotation, blur, crops, distortion")
         model = train_model()
         print("\n✅ Training complete!")
-        print("📌 Next: Run validation to check improvements")
+        print("📌 Next: Test with your problematic images!")
+        print("💡 Model should now work on USB sticks and highlighters!")
         
     elif args.mode == 'validate':
         validate_model(args.model)
