@@ -1,6 +1,6 @@
 """
-YOLOv8 Classification - OPTIMIZED FOR SIMILAR-LOOKING OBJECTS
-Focus: Better feature learning for pens/pencils/highlighters distinction
+YOLOv8 Classification - FINAL VERSION
+Fixes: Background interference + Pen/Pencil/Highlighter confusion
 """
 
 from ultralytics import YOLO
@@ -8,28 +8,27 @@ import torch
 from pathlib import Path
 import yaml
 import cv2
+import numpy as np
 
 # ============================================
-# CONFIGURATION - OPTIMIZED FOR FINE-GRAINED CLASSIFICATION
+# CONFIGURATION - ANTI-BACKGROUND + SHAPE FOCUS
 # ============================================
 DATASET_ROOT = Path("data")
 PROJECT_NAME = "office_supplies_classifier"
-
-# KEY CHANGE: Use larger model for better feature learning
-MODEL_SIZE = "l"  # Changed to 'l' (large) - better at subtle differences
+MODEL_SIZE = "l"
 
 CLASSES = [
     "erasers", "glue_sticks", "highlighters", "mugs", "paper_clips",
     "pencils", "pens", "staplers", "tapes", "usb_sticks"
 ]
 
-# EXTREME AUGMENTATION TRAINING - Force shape-based learning
-EPOCHS = 150              # Increased - aggressive aug needs more time
+# OPTIMIZED FOR: Ignore backgrounds + Distinguish similar objects
+EPOCHS = 150
 BATCH_SIZE = 16
-IMG_SIZE = 320
-PATIENCE = 25             # Much higher patience - aug makes training noisy
-LEARNING_RATE = 0.00005   # LOWER - more careful with extreme augmentation
-DROPOUT = 0.3             # Higher dropout for regularization
+IMG_SIZE = 384               # INCREASED - better detail for pen tips
+PATIENCE = 30                # Very high - noisy training
+LEARNING_RATE = 0.00003      # Very low for careful learning
+DROPOUT = 0.4                # High dropout
 
 # ============================================
 # CREATE YAML
@@ -51,116 +50,128 @@ def create_data_yaml():
     return yaml_path
 
 # ============================================
-# TRAIN - OPTIMIZED FOR FINE-GRAINED DIFFERENCES
+# TRAIN - ANTI-BACKGROUND + SHAPE FOCUS
 # ============================================
 def train_model():
-    """Train with focus on learning subtle object differences"""
+    """Train to ignore backgrounds and focus on object shapes"""
     
     yaml_path = create_data_yaml()
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    print(f"\n{'='*60}")
-    print(f"🎯 EXTREME AUGMENTATION TRAINING")
-    print(f"💡 Strategy: Force model to learn SHAPES, not colors/backgrounds")
-    print(f"{'='*60}")
+    print(f"\n{'='*70}")
+    print(f"🎯 ANTI-BACKGROUND + SHAPE-FOCUSED TRAINING")
+    print(f"{'='*70}")
+    print(f"Issue #1 Fix: Heavy crops + erasing to ignore backgrounds")
+    print(f"Issue #2 Fix: High resolution + extreme aug for pen/pencil/highlighter")
+    print(f"{'='*70}")
     print(f"Device: {device.upper()}")
     print(f"Model: YOLOv8{MODEL_SIZE}-cls")
-    print(f"Image Size: {IMG_SIZE}x{IMG_SIZE}")
-    print(f"Batch Size: {BATCH_SIZE}")
-    print(f"Patience: {PATIENCE} epochs (high for noisy training)")
-    print(f"Augmentation: EXTREME (colors, rotation, blur, crops)")
-    print(f"{'='*60}\n")
+    print(f"Image Size: {IMG_SIZE}x{IMG_SIZE} (HIGH for detail)")
+    print(f"Strategy: Force attention to CENTER object only")
+    print(f"{'='*70}\n")
     
     model = YOLO(f'yolov8{MODEL_SIZE}-cls.pt')
     
-    # OPTIMIZED TRAINING SETTINGS
     results = model.train(
         data=str(DATASET_ROOT),
         epochs=EPOCHS,
         batch=BATCH_SIZE,
-        imgsz=IMG_SIZE,           # Higher resolution for detail
-        patience=PATIENCE,        # More patience for convergence
+        imgsz=IMG_SIZE,          # Higher for pen tip details
+        patience=PATIENCE,
         save=True,
-        save_period=10,           # Save every 10 epochs
+        save_period=10,
         device=device,
-        workers=4,                # Reduced workers for stability
+        workers=4,
         project=PROJECT_NAME,
-        name='train_v3_extreme_aug',  # New name for extreme augmentation version
+        name='train_v4_final',   # New version
         exist_ok=True,
         pretrained=True,
         optimizer='AdamW',
         
-        # LEARNING RATE - Very conservative for fine details
-        lr0=LEARNING_RATE,        # Lower initial LR
-        lrf=0.0001,               # Very low final LR
-        momentum=0.9,             # Slightly lower momentum
-        weight_decay=0.0005,      # Moderate regularization
+        # LEARNING RATE
+        lr0=LEARNING_RATE,
+        lrf=0.00001,
+        momentum=0.937,
+        weight_decay=0.001,      # Increased regularization
         
         warmup_epochs=5,
         warmup_momentum=0.8,
         warmup_bias_lr=0.01,
-        cos_lr=True,              # Cosine annealing
+        cos_lr=True,
         
         verbose=True,
-        cache=False,              # No caching
-        amp=True,                 # Mixed precision
+        cache=False,
+        amp=True,
         
-        # EXTREME AUGMENTATION - Force shape learning, ignore colors/backgrounds
-        hsv_h=0.5,                # MAXIMUM hue shift - full color spectrum
-        hsv_s=0.9,                # MAXIMUM saturation changes
-        hsv_v=0.9,                # MAXIMUM brightness changes
-        degrees=180.0,            # EXTREME rotation - all angles (pens work any angle)
-        translate=0.3,            # Heavy translation
-        scale=0.9,                # EXTREME scaling (tiny to huge)
-        shear=10.0,               # Heavy shear distortion
-        perspective=0.001,        # Perspective distortion
-        flipud=0.5,               # Vertical flip (objects work upside down)
-        fliplr=0.5,               # Horizontal flip
+        # EXTREME COLOR AUGMENTATION - Ignore colors completely
+        hsv_h=0.8,               # MAXIMUM - all colors
+        hsv_s=0.95,              # MAXIMUM saturation
+        hsv_v=0.95,              # MAXIMUM brightness
         
-        # ADVANCED AUGMENTATION
-        mosaic=0.0,               # Off for classification
-        mixup=0.3,                # INCREASED - blend images to ignore backgrounds
+        # CRITICAL: HEAVY CROPS - Forces focus on CENTER object
+        degrees=180.0,           # All rotations
+        translate=0.4,           # INCREASED - move object around
+        scale=0.95,              # INCREASED - zoom in/out heavily
+        shear=15.0,              # Heavy distortion
+        perspective=0.002,       # Perspective changes
+        flipud=0.5,
+        fliplr=0.5,
+        
+        # BACKGROUND ELIMINATION STRATEGY
+        mosaic=0.0,
+        mixup=0.5,               # INCREASED - blend with other images (confuses background)
         copy_paste=0.0,
-        auto_augment='randaugment',  # RandAugment for extra variety
-        erasing=0.4,              # Random erasing - force focus on remaining parts
+        auto_augment='randaugment',
+        erasing=0.6,             # CRITICAL: Randomly erase 60% of patches (forces partial recognition)
+        crop_fraction=0.5,       # CRITICAL: Only see 50% of image (ignore edges/background)
         
         # REGULARIZATION
         dropout=DROPOUT,
+        label_smoothing=0.15,    # Higher - less overconfident
         
         # TRAINING DYNAMICS
-        close_mosaic=10,
+        close_mosaic=15,
         plots=True,
         val=True,
     )
     
-    print("\n" + "="*60)
-    print("✅ EXTREME AUGMENTATION TRAINING COMPLETE!")
-    print("="*60)
-    print(f"\n📁 Model saved to: {PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt")
-    print(f"📊 Check if model learned shapes instead of colors/backgrounds")
-    print(f"💡 This model should be more robust to real-world variations!")
+    print("\n" + "="*70)
+    print("✅ TRAINING COMPLETE!")
+    print("="*70)
+    print(f"📁 Model: {PROJECT_NAME}/train_v4_final/weights/best.pt")
+    print(f"💡 Test with backgrounds - should ignore them now!")
+    print(f"💡 Test pen/pencil/highlighter - should distinguish better!")
     
     return model
 
 # ============================================
-# VALIDATION WITH DETAILED ANALYSIS
+# VALIDATION
 # ============================================
 def validate_model(model_path=None):
-    """Validate with per-class breakdown"""
+    """Validate model"""
     
     if model_path is None:
-        # Check for v3 first, fallback to v2
+        # Auto-select best available
+        v4_path = f'{PROJECT_NAME}/train_v4_final/weights/best.pt'
         v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
         v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
-        model_path = v3_path if Path(v3_path).exists() else v2_path
+        
+        if Path(v4_path).exists():
+            model_path = v4_path
+        elif Path(v3_path).exists():
+            model_path = v3_path
+        else:
+            model_path = v2_path
     
     model = YOLO(model_path)
     
-    print("\n📊 Validating on VALIDATION set...")
+    print(f"\n💡 Using model: {model_path}\n")
+    
+    print("📊 Validating on VALIDATION set...")
     val_metrics = model.val(
         data=str(DATASET_ROOT / 'data.yaml'),
         split='val',
-        plots=True  # Generate confusion matrix
+        plots=True
     )
     
     print("\n📊 Validating on TEST set...")
@@ -171,46 +182,70 @@ def validate_model(model_path=None):
     )
     
     print("\n" + "="*60)
-    print("📈 PERFORMANCE COMPARISON")
+    print("📈 RESULTS")
     print("="*60)
-    print(f"Validation Top-1: {val_metrics.top1:.2%}")
-    print(f"Test Top-1:       {test_metrics.top1:.2%}")
-    print(f"Validation Top-5: {val_metrics.top5:.2%}")
-    print(f"Test Top-5:       {test_metrics.top5:.2%}")
+    print(f"Validation: {val_metrics.top1:.2%}")
+    print(f"Test:       {test_metrics.top1:.2%}")
+    print(f"Gap:        {(val_metrics.top1 - test_metrics.top1):.2%}")
     
-    gap = val_metrics.top1 - test_metrics.top1
-    print(f"\n⚠️  Generalization Gap: {gap:.2%}")
-    
-    if abs(gap) < 0.05:
+    if abs(val_metrics.top1 - test_metrics.top1) < 0.05:
         print("✅ Excellent generalization!")
-    elif abs(gap) < 0.10:
-        print("⚠️  Good, but could improve")
-    else:
-        print("❌ Needs improvement")
-    
-    print("\n💡 Check the confusion matrix at:")
-    print(f"   {Path(model_path).parent.parent}/confusion_matrix.png")
-    print(f"\n💡 Model used: {model_path}")
     
     return val_metrics, test_metrics
 
 # ============================================
-# PREDICT WITH ENSEMBLE (MULTIPLE INFERENCES)
+# PREDICT WITH CENTER-CROP PREPROCESSING
 # ============================================
-def predict_image(image_path, model_path=None, conf_threshold=0.3):
-    """Predict with lower threshold to see uncertainty"""
+def preprocess_image_center_focus(image_path):
+    """Preprocess: Focus on center, blur background"""
+    img = cv2.imread(str(image_path))
+    if img is None:
+        return None
+    
+    h, w = img.shape[:2]
+    
+    # Create center mask (focus on middle 60%)
+    mask = np.zeros((h, w), dtype=np.uint8)
+    center_h, center_w = int(h * 0.6), int(w * 0.6)
+    start_h, start_w = (h - center_h) // 2, (w - center_w) // 2
+    mask[start_h:start_h+center_h, start_w:start_w+center_w] = 255
+    
+    # Blur background slightly
+    blurred = cv2.GaussianBlur(img, (21, 21), 0)
+    
+    # Combine: sharp center, blurred edges
+    result = np.where(mask[:,:,None] == 255, img, blurred)
+    
+    return result.astype(np.uint8)
+
+def predict_image(image_path, model_path=None, conf_threshold=0.3, use_preprocessing=False):
+    """Predict with optional center-focus preprocessing"""
     
     if model_path is None:
-        # Check for v3 first (extreme aug), fallback to v2
+        v4_path = f'{PROJECT_NAME}/train_v4_final/weights/best.pt'
         v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
         v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
-        model_path = v3_path if Path(v3_path).exists() else v2_path
+        
+        if Path(v4_path).exists():
+            model_path = v4_path
+        elif Path(v3_path).exists():
+            model_path = v3_path
+        else:
+            model_path = v2_path
     
     model = YOLO(model_path)
     
+    # Optional preprocessing
+    source = image_path
+    if use_preprocessing:
+        preprocessed = preprocess_image_center_focus(image_path)
+        if preprocessed is not None:
+            source = preprocessed
+            print("💡 Applied center-focus preprocessing")
+    
     # Run prediction
     results = model.predict(
-        source=image_path,
+        source=source,
         imgsz=IMG_SIZE,
         conf=conf_threshold,
         verbose=False
@@ -222,205 +257,190 @@ def predict_image(image_path, model_path=None, conf_threshold=0.3):
     
     print(f"\n{'='*60}")
     print(f"📸 Image: {Path(image_path).name}")
+    print(f"🤖 Model: {Path(model_path).stem}")
     print(f"{'='*60}")
     print(f"🎯 Prediction: {top1_class.upper().replace('_', ' ')}")
     print(f"📊 Confidence: {top1_conf:.2%}")
     
-    # Enhanced warnings based on confidence
-    if top1_conf < 0.5:
-        print("⚠️  LOW CONFIDENCE - Model is very uncertain!")
-        print("💡 Tip: The image might be ambiguous or outside training distribution")
-    elif top1_conf < 0.7:
-        print("⚠️  Moderate confidence - Consider the top 3 predictions")
-    elif top1_conf > 0.95:
-        # Check if second prediction is very low (overconfident pattern)
-        if len(probs) >= 2 and probs[1][1].item() < 0.01:
-            print("⚠️  OVERCONFIDENT - Model might be wrong!")
-            print("💡 Very high confidence with near-zero alternatives suggests:")
-            print("   - Image might be outside training distribution")
-            print("   - Model hasn't seen similar examples")
-            print("   - Consider checking the prediction carefully")
-        else:
-            print("✅ Very high confidence - Likely correct")
-    else:
-        print("✅ High confidence")
+    # Confidence interpretation
+    probs = list(zip(result.probs.top5, result.probs.top5conf))
     
-    # Show top 5 with gap analysis
+    if top1_conf < 0.5:
+        print("⚠️  LOW CONFIDENCE - Very uncertain")
+        print("💡 Tip: Try better lighting or clearer angle")
+    elif top1_conf < 0.7:
+        print("⚠️  MODERATE - Check top 3")
+    elif top1_conf > 0.95 and len(probs) >= 2 and probs[1][1].item() < 0.02:
+        print("⚠️  VERY HIGH CONFIDENCE (check if correct!)")
+        print("💡 Overconfidence sometimes indicates unusual input")
+    else:
+        print("✅ Good confidence")
+    
+    # Show top 5
     print("\n📊 Top 5 Predictions:")
     print("-" * 60)
-    probs = list(zip(result.probs.top5, result.probs.top5conf))
     for i, (idx, conf) in enumerate(probs, 1):
         class_name = result.names[idx].replace('_', ' ')
         bar = "█" * int(conf * 50)
         print(f"  {i}. {class_name:15s} {conf:6.2%} {bar}")
     
-    # Show confidence gap
+    # Confidence gap analysis
     if len(probs) >= 2:
         gap = probs[0][1].item() - probs[1][1].item()
-        print(f"\n💡 Confidence gap (1st vs 2nd): {gap:.2%}")
-        if gap < 0.1:
-            print("   ⚠️  Close call between top predictions!")
-            print("   💡 Consider both possibilities or use TTA mode")
-        elif gap < 0.3:
-            print("   ⚠️  Model somewhat uncertain - check top 2-3 predictions")
-    
-    # Warning for common confusions
-    confusion_pairs = [
-        ('pens', 'pencils'), ('pencils', 'pens'),
-        ('highlighters', 'pens'), ('highlighters', 'pencils'),
-        ('erasers', 'paper_clips'), ('paper_clips', 'erasers')
-    ]
-    
-    if len(probs) >= 2:
-        top1 = result.names[probs[0][0]]
-        top2 = result.names[probs[1][0]]
-        if (top1, top2) in confusion_pairs:
-            print(f"   ⚠️  Common confusion: {top1} ↔ {top2}")
-            print(f"   💡 Try 'predict-tta' mode for better accuracy")
+        print(f"\n💡 Gap (1st vs 2nd): {gap:.2%}")
+        
+        if gap < 0.15:
+            print("   ⚠️  Close call! Consider both options")
+            
+            # Specific advice for pen/pencil/highlighter
+            top1_name = result.names[probs[0][0]]
+            top2_name = result.names[probs[1][0]]
+            
+            if {top1_name, top2_name} <= {'pens', 'pencils', 'highlighters'}:
+                print("   🔍 PEN/PENCIL/HIGHLIGHTER confusion detected!")
+                print("   💡 Tips to distinguish:")
+                print("      - Pens: Usually have clips/caps, smooth body")
+                print("      - Pencils: Hexagonal, wood texture, graphite tip")
+                print("      - Highlighters: Wider tip, translucent body")
     
     print("="*60)
     
     return top1_class, top1_conf
 
 # ============================================
-# PREDICT WITH TEST-TIME AUGMENTATION
+# WEBCAM WITH BACKGROUND BLUR OPTION
 # ============================================
-def predict_with_tta(image_path, model_path=None):
-    """Use TTA for more robust predictions (Note: Not supported by YOLOv8-cls)"""
-    
+def predict_webcam(model_path=None, camera_id=0, blur_background=False):
+    """Real-time webcam with optional background blur + center guide + high FPS"""
+
     if model_path is None:
+        v4_path = f'{PROJECT_NAME}/train_v4_final/weights/best.pt'
         v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/best.pt'
         v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
-        model_path = v3_path if Path(v3_path).exists() else v2_path
-    
-    model = YOLO(model_path)
-    
-    print("\n🔬 Running Test-Time Augmentation...")
-    
-    # Predict with augmentation
-    results = model.predict(
-        source=image_path,
-        imgsz=IMG_SIZE,
-        augment=True,  # Enable TTA
-        verbose=False
-    )
-    
-    result = results[0]
-    top1_class = result.names[result.probs.top1]
-    top1_conf = result.probs.top1conf.item()
-    
-    print(f"\n{'='*60}")
-    print(f"🔬 TTA Result: {top1_class.upper().replace('_', ' ')}")
-    print(f"📊 Confidence: {top1_conf:.2%}")
-    print(f"{'='*60}")
-    
-    return top1_class, top1_conf
+        if Path(v4_path).exists():
+            model_path = v4_path
+        elif Path(v3_path).exists():
+            model_path = v3_path
+        else:
+            model_path = v2_path
 
-# ============================================
-# WEBCAM WITH IMPROVED UI
-# ============================================
-def predict_webcam(model_path=None, camera_id=0):
-    """Real-time webcam classification"""
-    
-    if model_path is None:
-        v3_path = f'{PROJECT_NAME}/train_v3_extreme_aug/weights/epoch0.pt'
-        v2_path = f'{PROJECT_NAME}/train_v2/weights/best.pt'
-        model_path = v3_path if Path(v3_path).exists() else v2_path
-    
     model = YOLO(model_path)
     cap = cv2.VideoCapture(camera_id)
-    
+
     if not cap.isOpened():
         print("❌ Cannot access webcam")
         return
-    
-    # Set resolution
+
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
+
     print("\n" + "="*60)
-    print("📷 WEBCAM CLASSIFICATION")
+    print("📷 WEBCAM CLASSIFICATION (Optimized FPS + Center Guide)")
     print("="*60)
     print("Controls:")
     print("  'q' - Quit")
     print("  's' - Save frame")
-    print("  'f' - Toggle FPS")
+    print("  'f' - Toggle FPS display")
+    print("  'b' - Toggle background blur")
+    print("="*60)
+    print(f"🤖 Model: {Path(model_path).name}")
     print("="*60 + "\n")
-    
+
     show_fps = True
     frame_count = 0
     import time
     start_time = time.time()
-    
+
+    # ⚡ Warm-up: Run a quick forward pass to initialize CUDA/graph
+    print("⚙️ Warming up model...")
+    dummy = np.zeros((IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8)
+    model.predict(dummy, imgsz=IMG_SIZE, conf=0.2, verbose=False)
+    print("✅ Warm-up complete!\n")
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        
+
         frame_count += 1
-        
-        # Run prediction
+        process_frame = frame
+
+        # === Background blur (optional) ===
+        if blur_background:
+            h, w = frame.shape[:2]
+            mask = np.zeros((h, w), dtype=np.uint8)
+            center_h, center_w = int(h * 0.7), int(w * 0.7)
+            start_h, start_w = (h - center_h) // 2, (w - center_w) // 2
+            cv2.ellipse(mask, (w//2, h//2), (center_w//2, center_h//2),
+                        0, 0, 360, 255, -1)
+            blurred = cv2.GaussianBlur(frame, (41, 41), 0)
+            mask_3ch = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR) / 255.0
+            process_frame = (frame * mask_3ch + blurred * (1 - mask_3ch)).astype(np.uint8)
+
+        # === Downscale slightly before prediction to speed up ===
+        small_frame = cv2.resize(process_frame, (IMG_SIZE, IMG_SIZE))
+
+        # === Faster prediction: disable plotting and use stream mode ===
         results = model.predict(
-            source=frame,
+            source=small_frame,
             imgsz=IMG_SIZE,
-            conf=0.2,  # Lower threshold to see uncertainty
-            verbose=False
+            conf=0.25,
+            verbose=False,
+            stream=False,
+            show=False,
+            save=False
         )
-        
+
         result = results[0]
         top1_class = result.names[result.probs.top1]
         top1_conf = result.probs.top1conf.item()
-        
-        # Create dark overlay
-        overlay = frame.copy()
-        cv2.rectangle(overlay, (0, 0), (700, 280), (0, 0, 0), -1)
-        frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
-        
-        # Color based on confidence
+
+        # === Overlay information ===
+        display_frame = frame.copy()
+        h, w = display_frame.shape[:2]
+        center_h, center_w = int(h * 0.6), int(w * 0.6)
+        start_h, start_w = (h - center_h) // 2, (w - center_w) // 2
+        end_h, end_w = start_h + center_h, start_w + center_w
+
+        # Draw guide box
+        overlay = display_frame.copy()
+        cv2.rectangle(overlay, (start_w, start_h), (end_w, end_h), (0, 255, 255), 2)
+        cv2.putText(overlay, "Place object here (center focus)",
+                    (start_w + 20, start_h - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        display_frame = cv2.addWeighted(display_frame, 0.9, overlay, 0.1, 0)
+
+        # Color coding
         if top1_conf > 0.7:
-            color = (0, 255, 0)  # Green
-            status = "HIGH CONFIDENCE"
+            color = (0, 255, 0)
+            status = "HIGH"
         elif top1_conf > 0.5:
-            color = (0, 255, 255)  # Yellow
-            status = "MODERATE"
+            color = (0, 255, 255)
+            status = "MEDIUM"
         else:
-            color = (0, 165, 255)  # Orange
-            status = "LOW - UNCERTAIN"
-        
-        # Main prediction
-        cv2.putText(frame, f"{top1_class.upper().replace('_', ' ')}", 
-                   (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color, 3)
-        cv2.putText(frame, f"{top1_conf:.1%} - {status}", 
-                   (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        
-        # Confidence bar
-        bar_width = int(600 * top1_conf)
-        cv2.rectangle(frame, (10, 100), (610, 125), (50, 50, 50), -1)
-        cv2.rectangle(frame, (10, 100), (10 + bar_width, 125), color, -1)
-        
-        # Top 3
-        cv2.putText(frame, "Top 3:", (10, 155), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
-        
-        y_pos = 185
-        for i, (idx, conf) in enumerate(zip(result.probs.top5[:3], 
-                                            result.probs.top5conf[:3])):
-            name = result.names[idx].replace('_', ' ')
-            cv2.putText(frame, f"{i+1}. {name}: {conf:.1%}", 
-                       (10, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.55, 
-                       (255, 255, 255), 1)
-            y_pos += 30
-        
-        # FPS
+            color = (0, 165, 255)
+            status = "LOW"
+
+        # Prediction text
+        cv2.putText(display_frame, f"{top1_class.upper()}", (10, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, color, 3)
+        cv2.putText(display_frame, f"{top1_conf:.1%} - {status}",
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+        # FPS calculation
         if show_fps:
             elapsed = time.time() - start_time
             fps = frame_count / elapsed if elapsed > 0 else 0
-            cv2.putText(frame, f"FPS: {fps:.1f}", 
-                       (frame.shape[1] - 150, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        
-        cv2.imshow('YOLOv8 Office Supplies - Press Q to quit', frame)
-        
+            cv2.putText(display_frame, f"FPS: {fps:.1f}",
+                        (display_frame.shape[1] - 160, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+        if blur_background:
+            cv2.putText(display_frame, "BG BLUR: ON", (10, h - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
+        cv2.imshow('Office Supplies Classifier (High FPS + Center Box)', display_frame)
+
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
@@ -430,10 +450,14 @@ def predict_webcam(model_path=None, camera_id=0):
             print(f"📸 Saved: {filename}")
         elif key == ord('f'):
             show_fps = not show_fps
-    
+        elif key == ord('b'):
+            blur_background = not blur_background
+            print(f"🔄 Background blur: {'ON' if blur_background else 'OFF'}")
+
     cap.release()
     cv2.destroyAllWindows()
     print("\n✅ Webcam closed")
+
 
 # ============================================
 # MAIN
@@ -441,28 +465,34 @@ def predict_webcam(model_path=None, camera_id=0):
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description='YOLOv8 Fine-Grained Classification')
+    parser = argparse.ArgumentParser(description='YOLOv8 - Final Version')
     parser.add_argument('--mode', type=str, default='train',
-                       choices=['train', 'validate', 'predict', 'predict-tta', 'webcam'],
+                       choices=['train', 'validate', 'predict', 'webcam'],
                        help='Mode to run')
     parser.add_argument('--image', type=str, default=None,
-                       help='Path to image for prediction')
+                       help='Path to image')
     parser.add_argument('--model', type=str, default=None,
-                       help='Path to trained model')
+                       help='Model path')
     parser.add_argument('--camera', type=int, default=0,
                        help='Camera ID')
+    parser.add_argument('--preprocess', action='store_true',
+                       help='Apply center-focus preprocessing')
+    parser.add_argument('--blur-bg', action='store_true',
+                       help='Blur background in webcam')
     
     args = parser.parse_args()
     
     if args.mode == 'train':
-        print("\n🚀 Starting EXTREME AUGMENTATION training...")
-        print("💡 Strategy: Learn object SHAPES, ignore colors/backgrounds")
-        print("⚠️  This will take 5-6 hours but should work on ANY image!")
-        print("🎨 Training with: Extreme colors, rotation, blur, crops, distortion")
+        print("\n🚀 FINAL TRAINING - Fixing background + pen/pencil issues")
+        print("💡 Strategy:")
+        print("   1. Heavy crops (50%) - Forces focus on CENTER object")
+        print("   2. Heavy erasing (60%) - Learns from partial views")
+        print("   3. Extreme colors - Ignores color cues")
+        print("   4. High resolution (384) - Captures pen tip details")
+        print("\n⏱️  Expected time: 6-7 hours")
+        print("🎯 Should fix BOTH background AND pen/pencil issues!\n")
         model = train_model()
-        print("\n✅ Training complete!")
-        print("📌 Next: Test with your problematic images!")
-        print("💡 Model should now work on USB sticks and highlighters!")
+        print("\n✅ Training done! Test with problematic images")
         
     elif args.mode == 'validate':
         validate_model(args.model)
@@ -471,13 +501,7 @@ if __name__ == "__main__":
         if not args.image:
             print("❌ Error: --image required")
         else:
-            predict_image(args.image, args.model)
+            predict_image(args.image, args.model, use_preprocessing=args.preprocess)
             
-    elif args.mode == 'predict-tta':
-        if not args.image:
-            print("❌ Error: --image required")
-        else:
-            predict_with_tta(args.image, args.model)
-    
     elif args.mode == 'webcam':
-        predict_webcam(args.model, args.camera)
+        predict_webcam(args.model, args.camera, args.blur_bg)
