@@ -29,8 +29,18 @@ The goal was to classifies common office supplies into 10 categories using a cus
 ---
 
 ## Intallation
+### 1. Install git LFS first
+``` bash
+git lfs install
+```
+Explanation of why Git LFS is needed:
+Some files in this repository, such as the YOLOv8 .pt model files, are too large to be stored directly in Git. Git has a file size limit for normal commits (usually around 100 MB), and large binary files like trained machine learning models can quickly exceed that limit.
 
-### 1. Clone Repository
+Git LFS (Large File Storage) is an extension for Git that allows us to store large files efficiently. Instead of storing the full content of the file in the repository, Git LFS stores a pointer file in Git and keeps the actual content in a separate storage. When you clone the repository with Git LFS installed, it automatically downloads the real large files, such as our trained model checkpoints.
+
+Without Git LFS, you would only get a small placeholder file (a few bytes) instead of the actual model, which would cause errors when trying to load it in Python.
+
+### 2. Clone Repository
 ```bash
 git clone https://github.com/SaahilTakooree/PDE3802-Dataset.git
 cd PDE3802-Dataset
@@ -127,7 +137,7 @@ pip install PyYAML
 pip install matplotlib
 ```
 
-#### Torch install
+#### 3. Torch install
 
 ##### Nvidia GPUs
 Check your CUDA version:
