@@ -229,17 +229,17 @@ Classification Report:
 ```
 
 **Confusion Matrix:**  
-![Confusion Matrix](office_supplies_classifier/train_v7/confusion_matrix_normalized.png)
+<img src="office_supplies_classifier/train_v7/confusion_matrix_normalized.png" width="300">
 
 **F1 Score:**  
-![F1 Score Progression](office_supplies_classifier/train_v7/f1_line_graph.png)
+<img src="office_supplies_classifier/train_v7/f1_line_graph.png" width="300">
 
 **Result:**  
-![Result](office_supplies_classifier/train_v7/result.png)
+<img src="office_supplies_classifier/train_v7/results.png" width="300">
 
 **GUI Examples:**  
-![Webcame Prediction](assets/webcam.png)  
-![Upload Prediction](assets/upload.png)
+<img src="assets/webcam.png" width="200">
+<img src="assets/upload.png" width="200">
 
 ---
 ## Troubleshooting
