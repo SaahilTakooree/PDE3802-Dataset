@@ -159,9 +159,25 @@ pip install torch==2.9.0 --index-url https://download.pytorch.org/whl/cpu
 ## Usage
 ### 1. Using Pre-trained Model
 
+Open a terminal (Command Prompt, PowerShell, or your IDE terminal).
+
+Navigate to the root directory of the project, where run_gui.py is located — in this case, the PDE3802-Dataset folder.
+
 Run the GUI:
 ``` bash
 python run_gui.py
+```
+- Automatically uses GPU if available, otherwise CPU.
+- Input options:
+    - Single image from disk
+    - Live webcam feed (one office item per frame)
+
+
+Pre-trained weights location:
+``` bash
+PDE3802-Dataset/office_supplies_classifier/train_v7/weights/best.pt
+```
+
 ```
 - Automatically uses GPU if available, otherwise CPU.
 - Input options:
