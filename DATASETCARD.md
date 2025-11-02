@@ -378,3 +378,13 @@ Limitation: Being far away or a very busy background can cause non-detection. Th
 On a busy background, detection is possible if it is close to the camera.
 
 Limitation: The best results are on a plain background; busy backgrounds can depress reliability. The black or silver inner port (reflective metallic surface) of the USB makes the camera distinguish between a USB stick and eraser.
+
+## 10. 
+| Error Type | Affected Classes |  Description	| Primary Cause | 
+|-|-|-|-|
+|Blur / Focus-related Misclassification|Pens, Pencils, Highlighters|Objects with blurred or partially occluded tips were often misclassified between these three classes.|Lack of sharpness or focus near tip region, motion blur during image capture.|
+|Shape Confusion|Glue Sticks, Highlighters|Both have cylindrical shapes, causing confusion under side or top views.|Similar silhouettes; inadequate distinctive texture features.|
+|Missing Handle Misclassification|Mugs|Mugs without visible handles were sometimes detected as glasses or unclassified.|Handle not visible due to camera angle or occlusion.|
+|Scale and Size Ambiguity|Paper Clips, USB Sticks|Small items at far distances were sometimes missed or wrongly classified.|Scale difference; object appearing too small for feature extraction.|
+|Background Noise Interference|Erasers, USB Sticks|Cluttered or textured backgrounds caused false detections or class overlap.|Insufficient background variation during training.|
+|Lighting and Reflection Issues|Staplers, Tapes	| Reflections on metallic or glossy surfaces affected feature detection.|Inconsistent illumination and specular highlights.|

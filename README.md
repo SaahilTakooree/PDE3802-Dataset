@@ -114,16 +114,16 @@ run_gui.py
 
 ### 2. Install Dependencies
 ```bash
-pip install opencv-python==4.10.0 \
-            numpy==2.1.2 \
-            tqdm==4.67.1 \
-            scikit-learn==1.7.2 \
-            torch==2.9.0+cpu \
-            ultralytics==8.3.218 \
-            customtkinter==5.2.2 \
-            Pillow==11.0.0 \
-            PyYAML==6.0.2 \
-            matplotlib==3.9.2
+pip install opencv-python
+pip install numpy
+pip install tqdm
+pip install scikit-learn=
+pip install torch
+pip install ultralytics
+pip install customtkinter
+pip install Pillow
+pip install PyYAML
+pip install matplotlib
 ```
 
 #### Torch install
