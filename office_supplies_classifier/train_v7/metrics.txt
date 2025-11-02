@@ -1,0 +1,23 @@
+OFFICE SUPPLIES CLASSIFIER - ACCURACY REPORT
+==================================================
+Model: office_supplies_classifier/train_v7/weights/best.pt
+Accuracy: 0.969000 (96.90%)
+Macro F1-Score: 0.968921
+
+Classification Report:
+                 precision    recall  f1-score   support
+
+        erasers    0.97    0.97    0.97       100
+    glue_sticks    0.99    0.98    0.98       100
+   highlighters    1.00    1.00    1.00       100
+           mugs    1.00    0.99    0.99       100
+    paper_clips    0.96    0.97    0.97       100
+        pencils    0.91    0.86    0.89       100
+           pens    0.90    0.96    0.93       100
+       staplers    0.98    0.98    0.98       100
+          tapes    0.98    1.00    0.99       100
+     usb_sticks    1.00    0.98    0.99       100
+
+       accuracy                       0.97      0
+      macro avg    0.97    0.97    0.97      1000
+   weighted avg    0.97    0.97    0.97      1000

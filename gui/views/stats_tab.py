@@ -40,6 +40,7 @@ class StatsTab(ctk.CTkFrame):
         # Add the tabs.
         self.tab_view.add("Confusion Matrix")
         self.tab_view.add("Results")
+        self.tab_view.add("F1 Line Graph")
         self.tab_view.add("Metrics")
         
         # Set equal tab width button.
@@ -51,13 +52,15 @@ class StatsTab(ctk.CTkFrame):
         project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 
         # Define file path for model data.
-        self.conf_matrix_path = os.path.join(project_root, "office_supplies_classifier", "train_v4_final", "confusion_matrix_normalized.png")
-        self.results_path = os.path.join(project_root, "office_supplies_classifier", "train_v4_final", "results.png")
-        self.metrics_path = os.path.join(project_root, "office_supplies_classifier", "train_v4_final", "metrics.txt")
+        self.conf_matrix_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "confusion_matrix_normalized.png")
+        self.results_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "results.png")
+        self.f1_line_graph_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "f1_line_graph.png")
+        self.metrics_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "metrics.txt")
 
         # Initialise all tab.
         self._init_image_tab(self.tab_view.tab("Confusion Matrix"), self.conf_matrix_path, "Confusion Matrix")
         self._init_image_tab(self.tab_view.tab("Results"), self.results_path, "Training Results")
+        self._init_image_tab(self.tab_view.tab("F1 Line Graph"), self.f1_line_graph_path, "F1 Line Graph")
         self._init_text_tab(self.tab_view.tab("Metrics"), self.metrics_path)
 
 
