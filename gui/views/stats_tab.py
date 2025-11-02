@@ -47,15 +47,11 @@ class StatsTab(ctk.CTkFrame):
         for button in self.tab_view._segmented_button._buttons_dict.values():
             button.configure(width = 150)
 
-        # Get the model data location.
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
-
         # Define file path for model data.
-        self.conf_matrix_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "confusion_matrix_normalized.png")
-        self.results_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "results.png")
-        self.f1_line_graph_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "f1_line_graph.png")
-        self.metrics_path = os.path.join(project_root, "office_supplies_classifier", "train_v7", "metrics.txt")
+        self.conf_matrix_path = r"office_supplies_classifier/train_v7/confusion_matrix_normalized.png"
+        self.results_path = r"office_supplies_classifier/train_v7/results.png"
+        self.f1_line_graph_path = r"office_supplies_classifier/train_v7/f1_line_graph.png"
+        self.metrics_path = r"office_supplies_classifier/train_v7/metrics.txt"
 
         # Initialise all tab.
         self._init_image_tab(self.tab_view.tab("Confusion Matrix"), self.conf_matrix_path, "Confusion Matrix")

@@ -121,6 +121,7 @@ pip install scikit-learn=
 pip install torch
 pip install ultralytics
 pip install customtkinter
+pip install tkinter
 pip install Pillow
 pip install PyYAML
 pip install matplotlib

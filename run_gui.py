@@ -10,8 +10,7 @@ from gui.app import Application # Import the main GUI application class.
 if __name__ == "__main__":
 
     # Get the model file location.
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "office_supplies_classifier", "train_v7", "weights", "best.pt")
+    model_path = r"office_supplies_classifier/train_v7/weights/best.pt"
 
     # Check if the model exists.
     if not os.path.exists(model_path):
