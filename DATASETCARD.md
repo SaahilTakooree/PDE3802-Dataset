@@ -19,7 +19,7 @@
 
 ## 2. Summary of Dataset
 
-The Office Item Classifier Dataset is hand-picked collection of 10,000 images. These images span 10 common office supply items. There are items like pens, pencils, staplers, and USB sticks among others. The pictures are taken under different conditions with changes in the position, light, and background. The images were also augmented to enhance the model robustness.
+The Office Item Classifier Dataset is hand-picked collection of 10,000 images. These images span 10 common office supply items. There are items like pens, pencils, staplers, and USB sticks among others. The pictures are taken under different conditions with changes in their position, light, and background. The images were also augmented to enhance the model robustness.
 
 The dataset was created to address the problem of accurately differentiate between visually similar office items in real-world settings. For example, distinguishing between a pen from a pencil or a glue stick from a highlighter. This is relevant for automated inventory systems, and automated office desk sorting systems. While the dataset provides a rich training resources, the dataset is not to be used for decision-making outside of object classification, facial recognition, or personal data inference. Hence the reason why it does not contain people or personal context and it is only limited to office supply items.
 
@@ -337,17 +337,29 @@ Despite the fact that the dataset was strong enough for the detection of office 
 
 The detection is extremely reliable and can be done even on any kind of background (busy or plain), under various lighting conditions, inside or outside of the bags, and from different angles.
 
+There are distinctive features between the objects so a clear focus will lead to the correct detection of object.
+
+
 **Pen, Pencil, Highlighter:**
 
 Detection is quite reliable provided that the tip of the item is sharp and focused.
 
 Limitation: Blurred or partially occluded tips severely compromise detection accuracy.
 
+a) Shape and surface texture:
+A pen typically has  a smooth, glossy surface while a pencil has a matte or wooden texture with hexagonal or round body and sometimes an eraser and the top end. The Highlighter has a thicker and broader body with vivid fluorescent colour.
+
+b) Tip characteristics:
+A pen has a metallic nib, pencil has a tapered graphite tip and highlighter is recognised by its chisel-shaped tip.
+
+
+
 **Mug:**
 
 Detection may sometimes need to see the handle.
 
-Limitation: Lack of visibility of the handle in the image may cause misclassification or detection failure.
+Limitation: Lack of visibility of the handle in the image may cause misclassification as a glass or detection failure.
+
 
 **Paper Clips:**
 
@@ -359,10 +371,10 @@ Limitation: Clips that are a bit off-center or have not achieved a full focus mi
 
 If it is on a busy background, it has to be very near to the camera.
 
-Limitation: Being far away or a very busy background can cause non-detection.
+Limitation: Being far away or a very busy background can cause non-detection. The uniform matte surface with geometric form and colour consistency helps the camera to distinguish between eraser and USB stick
 
 **USB Stick:**
 
 On a busy background, detection is possible if it is close to the camera.
 
-Limitation: The best results are on a plain background; busy backgrounds can depress reliability.
+Limitation: The best results are on a plain background; busy backgrounds can depress reliability. The black or silver inner port (reflective metallic surface) of the USB makes the camera distinguish between a USB stick and eraser.
